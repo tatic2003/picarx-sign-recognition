@@ -137,4 +137,4 @@ ACTION_COOLDOWN = 8.0       # segundos mínimos entre dos reacciones a la misma 
 
 Proyecto desarrollado para la materia de Robótica — Maestría en Ciencias de la Inteligencia Artificial, FIUNA (Facultad de Ingeniería, Universidad Nacional de Asunción).
 
-**Autores:** Tatiana Caballero — [GitHub](https://github.com/tatic2003), Ricardo Romero, Diego Baez. 
+**Autores:** Tatiana Caballero — [GitHub](https://github.com/tatic2003), Ricardo Romero [GitHub](https://github.com/LogicRick), Diego Baez [GitHub](https://github.com/diegoBaez-F). 
