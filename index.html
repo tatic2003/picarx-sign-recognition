@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PiCar-X: Señales</title>
+<meta name="description" content="Un auto autónomo pequeño (PiCar-X sobre Raspberry Pi 5) que reconoce señales de tránsito en tiempo real con YOLOv8n y reacciona: frena, gira, cambia de velocidad y anuncia cada señal por voz. La página es la pista: desplazate para conducir.">
+<meta property="og:title" content="PiCar-X: Señales — la página es la pista">
+<meta property="og:description" content="Reconocimiento de señales de tránsito en tiempo real con YOLOv8n sobre un PiCar-X (Raspberry Pi 5). Desplazate para conducir el auto por la pista en S y ver lo que el robot ve.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#131416">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --asfalto:#131416; --asfalto-2:#1b1d21; --asfalto-3:#24272c;
+  --tiza:#f2eee4; --tiza-2:#c9c4b6; --tiza-3:#8d897d;
+  --amarillo:#f5c400; --rojo:#e23a2e; --azul:#2f74e0; --verde:#3ad46a; --verde-hud:#39ff6a;
+  --linea:rgba(242,238,228,.14);
+  --display:"Archivo","Archivo Narrow","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --gutter:16px; --maxw:1120px;
+}
+*{box-sizing:border-box}
+html{overflow-x:clip;scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--asfalto);color:var(--tiza);font-family:var(--display);font-size:17px;line-height:1.5;
+  background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:6px 6px}
+a{color:var(--amarillo)}
+a:hover{color:#ffd83a}
+:focus-visible{outline:3px solid var(--amarillo);outline-offset:3px;border-radius:2px}
+.skip{position:absolute;left:var(--gutter);top:-60px;background:var(--amarillo);color:#111;padding:.5rem .8rem;font-weight:800;z-index:50}
+.skip:focus{top:8px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter)}
+h1,h2,h3{margin:0;line-height:.95;letter-spacing:-.02em}
+.display{font-weight:900;font-stretch:72%;text-transform:uppercase}
+h2.display{font-size:clamp(2.2rem,6vw,4.6rem)}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tiza-3);line-height:1.5}
+.mono{font-family:var(--mono)}
+p.lead{font-size:clamp(1.05rem,1.4vw,1.3rem);max-width:60ch;color:var(--tiza-2)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.9rem;font-weight:600;
+  background:transparent;color:var(--tiza);border:2px solid var(--tiza);padding:.7rem 1rem;cursor:pointer;text-decoration:none;min-height:44px}
+.btn:hover{background:var(--tiza);color:#111}
+.btn.amarillo{background:var(--amarillo);border-color:var(--amarillo);color:#111}
+.btn.amarillo:hover{background:#ffd83a}
+kbd{font-family:var(--mono);background:var(--asfalto-3);border:1px solid var(--tiza-3);border-bottom-width:3px;padding:.05em .45em;border-radius:3px;color:var(--tiza);font-size:.9em}
+
+/* ---------- top / intro ---------- */
+header.top{padding:1.1rem 0;border-bottom:1px dashed var(--linea)}
+header.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+header.top .brand{font-family:var(--mono);font-size:.85rem;color:var(--tiza-2)}
+header.top nav{display:flex;gap:1.1rem;font-family:var(--mono);font-size:.8rem}
+header.top nav a{color:var(--tiza-2);text-decoration:none;border-bottom:1px solid transparent;padding:.3rem 0}
+header.top nav a:hover{color:var(--amarillo);border-color:var(--amarillo)}
+.intro{padding:clamp(3rem,8vw,7rem) 0 clamp(2rem,5vw,4rem);position:relative}
+.intro h1{font-size:clamp(3rem,11.5vw,10.5rem);font-weight:900;font-stretch:66%;text-transform:uppercase;line-height:.86;max-width:12ch}
+.intro h1 .amar{color:var(--amarillo)}
+.intro h1 .outline{color:transparent;-webkit-text-stroke:2px var(--tiza)}
+.intro .meta{display:grid;grid-template-columns:1fr;gap:1.5rem;margin-top:2.5rem;align-items:end}
+@media (min-width:820px){.intro .meta{grid-template-columns:1.2fr 1fr}}
+.term{font-family:var(--mono);font-size:.86rem;background:var(--asfalto-2);border:1px solid var(--linea);padding:1rem 1.1rem;color:var(--tiza-2);line-height:1.7;overflow:auto}
+.term .p{color:var(--verde)} .term .c{color:var(--tiza-3)}
+.term .cursor{display:inline-block;width:.6em;height:1em;background:var(--tiza);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.scrollhint{display:flex;gap:1rem;align-items:center;margin-top:1.5rem;flex-wrap:wrap}
+.scrollhint .arrow{font-family:var(--mono);color:var(--amarillo);animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(6px)}}
+
+/* ---------- pista ---------- */
+#pista{position:relative}
+#pista .tall{position:relative}
+.stage{position:sticky;top:0;height:100vh;height:100svh;width:100%;overflow:hidden;background:var(--asfalto)}
+.stage svg.world{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;inset:0;pointer-events:none;padding:var(--gutter)}
+.hud>*{pointer-events:auto}
+.cam{position:absolute;left:var(--gutter);top:var(--gutter);width:clamp(170px,24vw,250px);background:#0b0c0e;border:1px solid var(--tiza-3);
+  font-family:var(--mono);font-size:.68rem;color:var(--tiza-2);transition:opacity .25s;opacity:0}
+.cam.on{opacity:1}
+.cam .cam-head{display:flex;justify-content:space-between;padding:.35rem .5rem;border-bottom:1px solid var(--asfalto-3);color:var(--tiza-3);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase}
+.cam .rec{color:var(--rojo)}
+.cam svg{display:block;width:100%;aspect-ratio:1/1;background:linear-gradient(#141821 0 55%,#2a2b2a 55% 56%,#1c1d1d 56%)}
+.gates{padding:.45rem .5rem .55rem;display:grid;gap:.4rem}
+.gate{display:grid;grid-template-columns:auto 1fr auto;gap:.4rem;align-items:center}
+.gate .bar{position:relative;height:6px;background:var(--asfalto-3)}
+.gate .fill{position:absolute;left:0;top:0;bottom:0;background:var(--tiza-3);width:0}
+.gate .tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--amarillo)}
+.gate.ok .fill{background:var(--verde-hud)}
+.gate .v{min-width:4.6em;text-align:right;color:var(--tiza)}
+.gate.ok .v{color:var(--verde-hud)}
+.speed{position:absolute;right:var(--gutter);top:var(--gutter);text-align:right;font-family:var(--mono)}
+.speed .big{font-size:clamp(1rem,2.2vw,1.35rem);color:var(--verde-hud);background:#0b0c0e;border:1px solid var(--tiza-3);padding:.35rem .6rem;display:inline-block}
+.speed .small{font-size:.68rem;color:var(--tiza-3);margin-top:.35rem;letter-spacing:.08em;text-transform:uppercase}
+.speed .steer{font-size:.75rem;color:var(--amarillo);margin-top:.3rem;min-height:1.2em}
+.narr{position:absolute;left:var(--gutter);right:var(--gutter);bottom:max(var(--gutter),env(safe-area-inset-bottom));max-width:620px;margin:0 auto;
+  background:rgba(11,12,14,.92);border:1px solid var(--tiza-3);border-left:6px solid var(--tiza-3);padding:.8rem 1rem .9rem;
+  transition:opacity .25s,border-color .25s;opacity:0}
+.narr.on{opacity:1}
+.narr.fired{border-left-color:var(--verde-hud)}
+.narr .tag{display:flex;gap:.8rem;align-items:baseline;flex-wrap:wrap}
+.narr .name{font-weight:900;font-stretch:72%;text-transform:uppercase;font-size:clamp(1.5rem,4vw,2.4rem);line-height:1}
+.narr .state{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tiza-3)}
+.narr.fired .state{color:var(--verde-hud)}
+.narr .act{margin:.35rem 0 0;color:var(--tiza-2);font-size:clamp(.92rem,1.4vw,1.05rem);line-height:1.35}
+.narr .voz{display:inline-block;margin-top:.5rem;font-family:var(--mono);font-size:.72rem;color:#111;background:var(--amarillo);padding:.15rem .5rem;visibility:hidden}
+.narr.fired .voz{visibility:visible}
+.narr .count{font-family:var(--mono);font-size:.72rem;color:var(--tiza-3);margin-top:.4rem;min-height:1.2em}
+.stage .startcard,.stage .endcard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font-family:var(--mono);
+  background:rgba(11,12,14,.9);border:1px solid var(--tiza-3);padding:1rem 1.3rem;transition:opacity .3s;max-width:min(90vw,420px)}
+.stage .startcard .k,.stage .endcard .k{font-size:2.4rem;font-weight:600;color:var(--amarillo);display:block;line-height:1;margin-bottom:.4rem}
+.stage .startcard small,.stage .endcard small{color:var(--tiza-3);display:block;margin-top:.3rem;font-size:.75rem}
+.hidden{opacity:0;pointer-events:none!important}
+.progress{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tiza-2);margin-top:.35rem}
+@media (max-width:640px){
+  .speed .small{display:none}
+  .cam{width:clamp(170px,46vw,250px)}
+  .cam .cam-head span:last-child{display:none}
+  .gates{font-size:.6rem}
+}
+.ctrls{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+
+/* static mode */
+body.static .stage{position:relative;height:auto;aspect-ratio:16/10;max-height:80vh}
+@media (max-width:640px){body.static .stage{aspect-ratio:1/1}}
+body.static .hud .cam,body.static .hud .speed,body.static .hud .narr,body.static .hud .startcard,body.static .hud .endcard,body.static .progress{display:none}
+body.static #pista .tall{height:auto!important}
+body.static .scrollhint .arrow{display:none}
+
+/* señales table */
+.tabla{margin:2rem 0 0}
+.tabla summary{cursor:pointer;font-family:var(--mono);font-size:.9rem;padding:.8rem 0;list-style:none;display:flex;gap:.6rem;align-items:center;min-height:44px}
+.tabla summary::before{content:"+";display:inline-grid;place-items:center;width:1.5rem;height:1.5rem;border:2px solid var(--tiza);font-weight:700}
+.tabla[open] summary::before{content:"–"}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:.65rem .5rem;border-top:1px solid var(--linea);vertical-align:top}
+th{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tiza-3);font-weight:600}
+td .sw{display:block;width:2.2rem;height:2.2rem;margin-bottom:.3rem}
+td.cls{font-family:var(--mono);white-space:nowrap}
+.tscroll{overflow-x:auto}
+
+/* ---------- secciones ---------- */
+section.block{padding:clamp(3.5rem,8vw,7rem) 0;border-top:1px dashed var(--linea)}
+.grid2{display:grid;gap:2rem;grid-template-columns:1fr}
+.grid2>*{min-width:0}
+@media (min-width:860px){.grid2{grid-template-columns:1fr 1fr;gap:3rem}}
+.num{font-family:var(--mono);color:var(--amarillo);font-size:.85rem;margin-bottom:.8rem;display:block}
+
+/* espejo */
+.mirror{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+.card-sign{background:var(--asfalto-2);border:1px solid var(--linea);padding:1rem;text-align:center}
+.card-sign .img{width:min(100%,180px);margin:0 auto;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.card-sign .img svg{width:100%;height:auto;display:block}
+.mirror.flipped .card-sign.aug .img{transform:scaleX(-1)}
+.card-sign .cap{font-family:var(--mono);font-size:.75rem;color:var(--tiza-3);margin-top:.6rem}
+.card-sign .lbl{display:inline-block;margin-top:.5rem;font-family:var(--mono);font-size:.85rem;background:var(--asfalto-3);padding:.2rem .6rem;border:1px solid var(--tiza-3)}
+.mirror.flipped .card-sign.aug .lbl{border-color:var(--rojo);color:#ffb0a8}
+.verdict{margin-top:1rem;font-family:var(--mono);font-size:.85rem;padding:.8rem 1rem;border:1px solid var(--linea);background:var(--asfalto-2);min-height:3.2em}
+.verdict.bad{border-color:var(--rojo);color:#ffb0a8}
+.verdict.good{border-color:var(--verde);color:#b9f5cc}
+.toggle{display:inline-flex;border:2px solid var(--tiza);margin-top:1.2rem}
+.toggle button{font-family:var(--mono);font-size:.85rem;font-weight:600;background:transparent;color:var(--tiza);border:0;padding:.7rem 1rem;cursor:pointer;min-height:44px}
+.toggle button[aria-pressed="true"]{background:var(--tiza);color:#111}
+.toggle button+button{border-left:2px solid var(--tiza)}
+
+/* motor */
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin-top:1.5rem;border:1px solid var(--linea)}
+.pipe div{padding:1rem;border-right:1px solid var(--linea);border-bottom:1px solid var(--linea);position:relative}
+.pipe div strong{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amarillo);margin-bottom:.4rem}
+.pipe div span{font-size:.92rem;color:var(--tiza-2)}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--linea);border:1px solid var(--linea);margin-top:1.2rem}
+@media (min-width:600px){.metrics{grid-template-columns:repeat(4,1fr)}}
+.metrics div{background:var(--asfalto);padding:.9rem 1rem}
+.metrics b{display:block;font-family:var(--mono);font-size:clamp(1.3rem,3vw,2rem);font-weight:600;color:var(--tiza)}
+.metrics small{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tiza-3)}
+.spark{margin-top:1rem;border:1px solid var(--linea);background:var(--asfalto-2);padding:.6rem}
+.spark svg{width:100%;height:auto;display:block}
+.fine{font-size:.85rem;color:var(--tiza-3);margin:.6rem 0 0}
+dl.params{display:grid;grid-template-columns:auto 1fr;gap:.4rem 1rem;font-size:.95rem;margin:1.2rem 0 0}
+dl.params dt{font-family:var(--mono);color:var(--amarillo);font-size:.85rem}
+dl.params dd{margin:0;color:var(--tiza-2)}
+ul.plain{padding-left:1.1rem;color:var(--tiza-2)}
+ul.plain li{margin:.3rem 0}
+
+/* repo */
+pre{font-family:var(--mono);font-size:.84rem;background:var(--asfalto-2);border:1px solid var(--linea);padding:1rem 1.1rem;overflow:auto;color:var(--tiza-2);line-height:1.65;margin:0}
+pre .c{color:var(--tiza-3)} pre .k{color:var(--verde)}
+.tree{font-family:var(--mono);font-size:.84rem;line-height:1.75;color:var(--tiza-2);overflow-wrap:anywhere}
+.tree b{color:var(--tiza);font-weight:600}
+.tree i{color:var(--tiza-3);font-style:normal}
+.video{margin-top:1.5rem;border:2px dashed var(--tiza-3);padding:2.2rem 1.2rem;text-align:center;font-family:var(--mono);color:var(--tiza-3);font-size:.9rem}
+.video .road{display:block;width:120px;height:14px;margin:0 auto 1rem;background:repeating-linear-gradient(90deg,var(--amarillo) 0 18px,transparent 18px 30px);opacity:.6}
+.links{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.5rem}
+footer{padding:2.5rem 0 3rem;border-top:1px dashed var(--linea);font-family:var(--mono);font-size:.8rem;color:var(--tiza-3)}
+footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+
+@media (prefers-reduced-motion:reduce){
+  .term .cursor,.scrollhint .arrow{animation:none}
+  .card-sign .img,.cam,.narr{transition:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#pista">Saltar a la pista</a>
+
+<!-- símbolos de las señales (dibujos originales) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="sg-pare" viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#e23a2e" stroke="#fff" stroke-width="4"/><text x="50" y="60" text-anchor="middle" font-family="Archivo,Arial Narrow,Arial,sans-serif" font-weight="900" font-size="28" fill="#fff" letter-spacing="1">PARE</text></symbol>
+    <symbol id="sg-peaton" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" fill="#2f74e0" stroke="#fff" stroke-width="4"/><circle cx="50" cy="24" r="8" fill="#fff"/><path d="M50 34 L50 60 M50 60 L38 84 M50 60 L62 84 M38 46 L62 46" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/><path d="M14 86 H86" stroke="#fff" stroke-width="3" stroke-dasharray="8 6"/></symbol>
+    <symbol id="sg-ceder" viewBox="0 0 100 100"><polygon points="6,8 94,8 50,92" fill="#fff" stroke="#e23a2e" stroke-width="10" stroke-linejoin="round"/><text x="50" y="40" text-anchor="middle" font-family="Archivo,Arial Narrow,Arial,sans-serif" font-weight="900" font-size="15" fill="#111">CEDA</text><text x="50" y="56" text-anchor="middle" font-family="Archivo,Arial Narrow,Arial,sans-serif" font-weight="900" font-size="11" fill="#111">EL PASO</text></symbol>
+    <symbol id="sg-peligro" viewBox="0 0 100 100"><polygon points="50,3 97,50 50,97 3,50" fill="#f5c400" stroke="#111" stroke-width="4"/><path d="M50 26 V58" stroke="#111" stroke-width="10" stroke-linecap="round"/><circle cx="50" cy="73" r="6" fill="#111"/></symbol>
+    <symbol id="sg-contramano" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#e23a2e" stroke="#fff" stroke-width="4"/><rect x="18" y="42" width="64" height="16" fill="#fff"/></symbol>
+    <symbol id="sg-derecha" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#2f74e0" stroke="#fff" stroke-width="4"/><path d="M22 50 H70 M54 32 L72 50 L54 68" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="sg-izquierda" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#2f74e0" stroke="#fff" stroke-width="4"/><path d="M78 50 H30 M46 32 L28 50 L46 68" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="sg-avance" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#2a9d55" stroke="#fff" stroke-width="4"/><path d="M50 78 V30 M32 48 L50 28 L68 48" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="sg-vel20" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#e23a2e" stroke-width="9"/><text x="50" y="64" text-anchor="middle" font-family="Archivo,Arial Narrow,Arial,sans-serif" font-weight="900" font-size="40" fill="#111">20</text></symbol>
+    <symbol id="sg-vel30" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#e23a2e" stroke-width="9"/><text x="50" y="64" text-anchor="middle" font-family="Archivo,Arial Narrow,Arial,sans-serif" font-weight="900" font-size="40" fill="#111">30</text></symbol>
+    <!-- auto de juguete, vista cenital, mirando a +x -->
+    <symbol id="auto" viewBox="-40 -26 80 52">
+      <rect x="-36" y="-21" width="72" height="42" rx="12" fill="#f5c400" stroke="#2b2200" stroke-width="2"/>
+      <rect x="-24" y="-24" width="14" height="7" rx="2" fill="#111"/><rect x="-24" y="17" width="14" height="7" rx="2" fill="#111"/>
+      <g class="ruedas-del"><rect x="14" y="-24" width="14" height="7" rx="2" fill="#111"/><rect x="14" y="17" width="14" height="7" rx="2" fill="#111"/></g>
+      <rect x="-14" y="-15" width="30" height="30" rx="5" fill="#23262b"/>
+      <rect x="10" y="-13" width="7" height="26" rx="2" fill="#8fd2ff" opacity=".85"/>
+      <rect x="-30" y="-10" width="9" height="20" rx="2" fill="#2a8f4a"/>
+      <rect x="31" y="-16" width="4" height="8" rx="1" fill="#fff8d0"/><rect x="31" y="8" width="4" height="8" rx="1" fill="#fff8d0"/>
+      <rect class="freno" x="-37" y="-16" width="3" height="8" fill="#5a1410"/><rect class="freno" x="-37" y="8" width="3" height="8" fill="#5a1410"/>
+      <circle cx="30" cy="0" r="5" fill="#111"/><circle cx="30" cy="0" r="2.5" fill="#4ad8ff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">tatic2003 / <strong>picarx-sign-recognition</strong></div>
+    <nav aria-label="Secciones"><a href="#pista">Pista</a><a href="#espejo">El espejo</a><a href="#motor">Motor</a><a href="#repo">Repo</a></nav>
+  </div>
+</header>
+
+<main id="main">
+<section class="intro" aria-labelledby="titulo">
+  <div class="wrap">
+    <p class="eyebrow">Robótica · Maestría en IA · FIUNA</p>
+    <h1 id="titulo"><span class="outline">Un auto</span> <span class="amar">que lee</span> señales</h1>
+    <div class="meta">
+      <p class="lead">Un PiCar-X sobre Raspberry Pi 5 reconoce diez señales de tránsito en tiempo real con un YOLOv8n entrenado a medida y reacciona: frena, gira, cambia de velocidad y anuncia cada señal por voz. Esta página <em>es</em> la pista de demostración: una S con dos giros de 90° y un desvío final a la derecha: la calle recta que sigue es contramano.</p>
+      <div>
+        <div class="term" role="img" aria-label="Terminal: python sign_movement_final.py. Teclas: s para iniciar, p para detener.">
+          <span class="p">ricardo@picarx</span><span class="c">:~ $</span> python sign_movement_final.py<br>
+          <span class="c"># modelo .tflite cargado · stream en :8080/video</span><br>
+          <span class="c"># [</span>s<span class="c">] iniciar conducción autónoma · [</span>p<span class="c">] detener</span><br>
+          <span class="c">&gt;</span> <span class="cursor" aria-hidden="true"></span>
+        </div>
+        <div class="scrollhint">
+          <span class="arrow" aria-hidden="true">↓↓↓</span>
+          <span id="hint-text">Desplazate hacia abajo para presionar <kbd>s</kbd> y conducir.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pista" aria-labelledby="pista-h">
+  <div class="wrap" style="padding-bottom:1rem">
+    <div class="ctrls">
+      <h2 id="pista-h" class="eyebrow" style="margin:0 auto 0 0">La pista · 10 señales · 70 cm entre señales en la pista real</h2>
+      <button class="btn" id="btn-static" type="button" aria-pressed="false">Ver versión estática</button>
+      <a class="btn" href="#tabla">Ver lista de señales</a>
+    </div>
+  </div>
+  <div class="tall" id="tall">
+    <div class="stage" id="stage">
+      <svg class="world" id="world" viewBox="0 0 1000 600" role="img" aria-labelledby="world-title world-desc">
+        <title id="world-title">Pista en S con el auto y diez señales</title>
+        <desc id="world-desc">Un auto de juguete amarillo recorre una pista en S: una recta, un giro de 90° a la derecha, otra recta, un giro de 90° a la izquierda, otra recta y un desvío final de 90° a la derecha, porque la calle recta que sigue está marcada como contramano. Las señales están a la derecha del camino en este orden: pare, peatón, derecha, peligro, velocidad 20, avance, izquierda, velocidad 30, ceder y contramano.</desc>
+        <defs>
+          <pattern id="grass" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#15171a"/><circle cx="8" cy="12" r="1.2" fill="#1f2226"/><circle cx="29" cy="31" r="1.2" fill="#1f2226"/></pattern>
+        </defs>
+        <rect id="ground" x="-3000" y="-3000" width="9000" height="9000" fill="url(#grass)"/>
+        <g id="track-g">
+          <path id="stub-edge" d="M 2240 1280 H 2640" fill="none" stroke="#0d0e10" stroke-width="104" stroke-linecap="butt"/>
+          <path id="road-edge" d="" fill="none" stroke="#0d0e10" stroke-width="104" stroke-linecap="butt"/>
+          <path id="stub" d="M 2240 1280 H 2640" fill="none" stroke="#2a2d32" stroke-width="92" stroke-linecap="butt"/>
+          <path id="road" d="" fill="none" stroke="#2a2d32" stroke-width="92" stroke-linecap="butt"/>
+          <path id="road-side-l" d="" fill="none" stroke="#dcd6c6" stroke-width="2.5" opacity=".7"/>
+          <path id="road-center" d="" fill="none" stroke="#f5c400" stroke-width="3" stroke-dasharray="26 22" opacity=".85"/>
+          <path id="stub-center" d="M 2240 1280 H 2640" fill="none" stroke="#f5c400" stroke-width="3" stroke-dasharray="26 22" opacity=".45"/>
+          <g id="stub-barrier" aria-hidden="true"><rect x="2636" y="1238" width="12" height="84" fill="#e23a2e"/><rect x="2636" y="1250" width="12" height="12" fill="#f2eee4"/><rect x="2636" y="1274" width="12" height="12" fill="#f2eee4"/><rect x="2636" y="1298" width="12" height="12" fill="#f2eee4"/></g>
+          <g id="startline"></g>
+          <g id="signs"></g>
+          <g id="static-labels"></g>
+        </g>
+        <g id="car" transform="translate(0 0)"><use href="#auto" x="-40" y="-26" width="80" height="52"/></g>
+      </svg>
+
+      <div class="hud">
+        <div class="cam" id="cam" aria-live="off">
+          <div class="cam-head"><span><span class="rec">●</span> cam · 640×640</span><span>lo que ve el robot</span></div>
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <g id="cam-sign"><use id="cam-use" href="#sg-pare" x="0" y="0" width="40" height="40"/></g>
+            <rect id="cam-box" x="0" y="0" width="40" height="40" fill="none" stroke="#39ff6a" stroke-width="1.5"/>
+            <text id="cam-label" x="0" y="0" font-family="JetBrains Mono,ui-monospace,monospace" font-size="8" fill="#39ff6a">pare 0.91 area=0.035</text>
+            <text x="6" y="192" font-family="JetBrains Mono,ui-monospace,monospace" font-size="8" fill="#39ff6a" id="cam-speed">Velocidad: 12</text>
+          </svg>
+          <div class="gates">
+            <div class="gate" id="g-conf"><span>conf</span><span class="bar"><span class="fill"></span><span class="tick" style="left:85%"></span></span><span class="v">0.00 / 0.85</span></div>
+            <div class="gate" id="g-area"><span>area</span><span class="bar"><span class="fill"></span><span class="tick"></span></span><span class="v">0.000 / 0.030</span></div>
+          </div>
+        </div>
+        <div class="speed">
+          <div class="big" id="speed-big">Velocidad: 0</div>
+          <div class="small">overlay del stream · :8080/video</div>
+          <div class="progress" id="progress" aria-live="polite">señal 0 / 10</div>
+          <div class="steer" id="steer" aria-live="off"></div>
+        </div>
+        <div class="startcard" id="startcard"><span class="k">s</span>conducción autónoma: <strong>lista</strong><small>seguí desplazándote para avanzar</small></div>
+        <div class="endcard hidden" id="endcard"><span class="k">p</span>detenido · fin de la pista<small>10 señales, 2 giros de 90°, 1 desvío a la derecha</small></div>
+        <div class="narr" id="narr" aria-live="polite">
+          <div class="tag"><span class="name" id="n-name">pare</span><span class="state" id="n-state">detectada · acercándose</span></div>
+          <p class="act" id="n-act"></p>
+          <span class="voz" id="n-voz">espeak-ng → «pare» · WAV por WiFi a la laptop</span>
+          <div class="count" id="n-count"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <details class="tabla" id="tabla">
+      <summary>Las diez señales y lo que hace el auto (tabla)</summary>
+      <div class="tscroll">
+      <table>
+        <thead><tr><th>Señal · clase</th><th>Acción del auto</th><th>Umbral de área</th></tr></thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+      </div>
+      <p class="fine">Umbral de confianza: 0.85 para todas las clases. Enfriamiento: 8 s por clase. El umbral de área (área del cuadro ÷ área del cuadro de imagen) mide qué tan cerca está la señal; por defecto 0.03, con ajustes por clase.</p>
+    </details>
+  </div>
+</section>
+
+<section class="block" id="espejo" aria-labelledby="espejo-h">
+  <div class="wrap">
+    <span class="num">02 — la gran historia</span>
+    <h2 class="display" id="espejo-h">El modelo confundía izquierda con derecha</h2>
+    <div class="grid2" style="margin-top:1.5rem">
+      <div>
+        <p class="lead">El primer modelo giraba al lado equivocado. La causa no estaba en el auto ni en la cámara: estaba en una línea de configuración por defecto.</p>
+        <p>YOLO aplica por defecto una aumentación de <span class="mono">fliplr=0.5</span>: con probabilidad 0,5 refleja horizontalmente cada imagen de entrenamiento. La imagen se espeja, pero la etiqueta no cambia. Una flecha de «izquierda» reflejada es, visualmente, una flecha de derecha… y el modelo la aprendió como «izquierda».</p>
+        <p>La solución fue reentrenar con <span class="mono">fliplr=0.0</span>. El notebook que la reproduce es <a href="https://github.com/tatic2003/picarx-sign-recognition/blob/main/notebooks/sign_traffic_recognition_final_train.ipynb"><span class="mono">sign_traffic_recognition_final_train.ipynb</span></a>.</p>
+        <div class="toggle" role="group" aria-label="Aumentación de reflejo horizontal">
+          <button type="button" id="flip-on" aria-pressed="false">fliplr=0.5 (por defecto)</button>
+          <button type="button" id="flip-off" aria-pressed="true">fliplr=0.0 (corregido)</button>
+        </div>
+      </div>
+      <div>
+        <div class="mirror" id="mirror">
+          <div class="card-sign">
+            <div class="img"><svg viewBox="0 0 100 100" role="img" aria-label="Señal izquierda, imagen original"><use href="#sg-izquierda" width="100" height="100"/></svg></div>
+            <div class="cap">imagen original</div>
+            <div class="lbl">label: izquierda</div>
+          </div>
+          <div class="card-sign aug">
+            <div class="img" id="aug-img"><svg viewBox="0 0 100 100" role="img" aria-label="Señal izquierda tal como entra al entrenamiento"><use href="#sg-izquierda" width="100" height="100"/></svg></div>
+            <div class="cap" id="aug-cap">lo que entra al entrenamiento</div>
+            <div class="lbl">label: izquierda</div>
+          </div>
+        </div>
+        <div class="verdict good" id="verdict" aria-live="polite">Sin reflejo: la flecha y la etiqueta coinciden. El modelo aprende «izquierda» = flecha a la izquierda.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="motor" aria-labelledby="motor-h">
+  <div class="wrap">
+    <span class="num">03 — bajo el capó</span>
+    <h2 class="display" id="motor-h">Cómo funciona</h2>
+    <div class="pipe" aria-label="Flujo del sistema">
+      <div><strong>01 · datos</strong><span>Dataset etiquetado en Roboflow, dividido 70/20/10 (train/valid/test). Aumentación offline ×3 sobre train.</span></div>
+      <div><strong>02 · modelo</strong><span>YOLOv8n ajustado desde pesos COCO. Reentrenado con <span class="mono">fliplr=0.0</span>; parada temprana en la época 67 (patience 20).</span></div>
+      <div><strong>03 · en el Pi</strong><span>Exportado a <span class="mono">.tflite</span>, ejecutado con <span class="mono">ai-edge-litert</span> con entrada 640×640 sobre la Raspberry Pi 5.</span></div>
+      <div><strong>04 · decisión</strong><span>Confianza ≥ 0.85, área del cuadro ≥ umbral de la clase, enfriamiento de 8 s por clase. Inicio y parada manuales por SSH (<kbd>s</kbd>/<kbd>p</kbd>).</span></div>
+      <div><strong>05 · video</strong><span>Stream MJPEG con detecciones dibujadas en el puerto 8080, ruta <span class="mono">/video</span>.</span></div>
+      <div><strong>06 · voz</strong><span>Texto a voz con <span class="mono">espeak-ng</span> en el Pi; el WAV viaja por WiFi (HTTP) a una laptop que lo reproduce (<span class="mono">audio_server.py</span>).</span></div>
+    </div>
+
+    <div class="grid2" style="margin-top:3rem">
+      <div>
+        <h3 class="eyebrow">Entrenamiento · métricas de validación · corrida entrenamiento `sign_traffic_recognition_final_train.ipynb`</h3>
+        <div class="metrics">
+          <div><b>0.957</b><small>precisión</small></div>
+          <div><b>0.988</b><small>recall</small></div>
+          <div><b>0.974</b><small>mAP50</small></div>
+          <div><b>0.891</b><small>mAP50-95</small></div>
+        </div>
+        <div class="spark">
+          <svg viewBox="0 0 600 160" role="img" aria-label="mAP50 y mAP50-95 sobre el conjunto de validación a lo largo de 67 épocas; ambas curvas suben rápido en las primeras épocas y luego se estabilizan.">
+            <g font-family="JetBrains Mono,ui-monospace,monospace" font-size="10" fill="#8d897d">
+              <text x="4" y="12">1.0</text><text x="4" y="78">0.8</text><text x="4" y="146">0.6</text>
+              <text x="36" y="156">ép. 1</text><text x="556" y="156">ép. 67</text>
+            </g>
+            <line x1="34" y1="8" x2="596" y2="8" stroke="#2b2e33"/><line x1="34" y1="74" x2="596" y2="74" stroke="#2b2e33"/><line x1="34" y1="140" x2="596" y2="140" stroke="#2b2e33"/>
+            <polyline id="sp-map50" fill="none" stroke="#f5c400" stroke-width="2" points=""/>
+            <polyline id="sp-map5095" fill="none" stroke="#dcd6c6" stroke-width="2" stroke-dasharray="4 3" points=""/>
+            <g font-family="JetBrains Mono,ui-monospace,monospace" font-size="10"><text x="420" y="112" fill="#f5c400">— mAP50</text><text x="420" y="128" fill="#dcd6c6">- - mAP50-95</text></g>
+          </svg>
+        </div>
+        <p class="fine">Valores de la última época (67) sobre el conjunto de <strong>validación</strong>, tomados de <span class="mono">results.csv</span> de la corrida. Mejor mAP50-95 de validación durante el entrenamiento: 0.910 (época 47). La evaluación final sobre el conjunto de <strong>test</strong> está en <a href="https://github.com/tatic2003/picarx-sign-recognition/blob/main/notebooks/model_evaluation.ipynb">notebooks/model_evaluation.ipynb</a>. No se midió la precisión del auto en pista.</p>
+      </div>
+      <div>
+        <h3 class="eyebrow">Parámetros de decisión (del código)</h3>
+        <dl class="params">
+          <dt>confianza</dt><dd>≥ 0.85 para disparar una acción</dd>
+          <dt>área</dt><dd>área del cuadro ÷ área del cuadro de imagen; por defecto ≥ 0.03</dd>
+          <dt>ajustes</dt><dd>contramano 0.02 · vel30 0.01 · derecha 0.025 · izquierda 0.025 · pare 0.035 · ceder 0.04</dd>
+          <dt>enfriamiento</dt><dd>8 s por clase, para no repetir la acción sobre la misma señal</dd>
+          <dt>velocidades</dt><dd>crucero 12 · vel20 → 5 · vel30 → 30 · peligro → 7 durante 2.5 s</dd>
+          <dt>giros</dt><dd>derecha +30° / izquierda −30° durante 2 s, tras avanzar 0.7 s · contramano: gira a la derecha durante 3.5 s</dd>
+          <dt>paradas</dt><dd>pare, peatón y ceder: avanza 0.7 s para acercarse y se detiene 2.5 s</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="repo" aria-labelledby="repo-h">
+  <div class="wrap">
+    <span class="num">04 — repo y ejecución</span>
+    <h2 class="display" id="repo-h">Probalo vos</h2>
+    <div class="grid2" style="margin-top:1.5rem">
+      <div>
+        <h3 class="eyebrow">Cómo correrlo</h3>
+        <pre style="margin-top:.8rem"><span class="c"># en el Pi y en la laptop</span>
+<span class="k">git clone</span> https://github.com/tatic2003/picarx-sign-recognition.git
+<span class="k">cd</span> picarx-sign-recognition
+<span class="k">pip install</span> -r requirements.txt
+
+<span class="c"># en la laptop (reproduce la voz)</span>
+<span class="k">python</span> audio_server.py
+
+<span class="c"># en la Raspberry Pi 5 (PiCar-X), por SSH</span>
+<span class="k">python</span> sign_movement_final.py
+<span class="c"># s → iniciar · p → detener · video en http://&lt;ip-del-pi&gt;:8080/video</span></pre>
+        <div class="video" id="video-box">
+          <span class="road" aria-hidden="true"></span>
+          <span id="video-text">video de la demo · próximamente</span>
+        </div>
+      </div>
+      <div>
+        <h3 class="eyebrow">Estructura</h3>
+        <div class="tree" style="margin-top:.8rem">
+          <b>picarx-sign-recognition/</b><br>
+          ├─ <b>sign_movement_final.py</b> <i>· script principal: detección + acciones + voz</i><br>
+          ├─ <b>audio_server.py</b> <i>· reproduce en la laptop el WAV que manda el Pi</i><br>
+          ├─ modelo_final/<b>best.pt</b> · <b>best_sin_flip.tflite</b> <i>· pesos finales y export para el Pi</i><br>
+          ├─ dataset/<b>signal_recognition_picarx.yolov8.zip</b><br>
+          ├─ notebooks/ <i>· entrenamiento final (sin flip) y evaluación</i><br>
+          ├─ requirements.txt<br>
+          └─ README.md
+        </div>
+        <div class="links">
+          <a class="btn amarillo" href="https://github.com/tatic2003/picarx-sign-recognition">Repositorio en GitHub</a>
+          <a class="btn" href="https://github.com/tatic2003">github.com/tatic2003</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Tati · Maestría en Inteligencia Artificial · FIUNA · curso de Robótica</span>
+    <span>PiCar-X · Raspberry Pi 5 · YOLOv8n · ai-edge-litert · espeak-ng</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+// ====== CONFIG ======
+const DEMO_VIDEO_URL = "https://drive.google.com/file/d/1WWgtIXTUVIPsnL_vW4e2Ag4E438TXWOr/view?usp=sharing";
+const CRUCERO = 12;
+
+// Orden de las señales en esta página (la pista real tiene 70 cm entre señales).
+// s = distancia a lo largo del camino. thr = umbral de área (del código).
+const SIGNS = [
+  {id:'pare',      s:240,  thr:0.035, kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
+  {id:'peaton',    s:540,  thr:0.03,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.', label:'peatón'},
+  {id:'derecha',   s:1020, thr:0.025, kind:'turnR', act:'Avanza 0.7 s y gira la dirección +30° durante 2 s.'},
+  {id:'peligro',   s:1440, thr:0.03,  kind:'slow', act:'Baja la velocidad a 7 durante 2.5 s.'},
+  {id:'vel20',     s:1740, thr:0.03,  kind:'speed', speed:5,  act:'Fija la velocidad en 5.'},
+  {id:'avance',    s:2040, thr:0.03,  kind:'speed', speed:12, act:'Vuelve a la velocidad de crucero (12).'},
+  {id:'izquierda', s:2240, thr:0.025, kind:'turnL', act:'Avanza 0.7 s y gira la dirección −30° durante 2 s.'},
+  {id:'vel30',     s:2680, thr:0.01,  kind:'speed', speed:30, act:'Fija la velocidad en 30.'},
+  {id:'ceder',     s:2980, thr:0.04,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
+  // la señal está sobre la calle recta que sigue (contramano): el auto no puede seguir derecho y gira a la derecha
+  {id:'contramano',s:3610, tr:260, pos:{x:2450,y:1372}, thr:0.02,  kind:'contra', act:'Gira a la derecha durante 3.5 s: no puede seguir derecho porque la ruta que sigue es contramano.'}
+];
+const ROAD_D = "M 0 0 H 1120 A 140 140 0 0 1 1260 140 V 1140 A 140 140 0 0 0 1400 1280 H 2240 A 110 110 0 0 1 2350 1390 V 1700";
+const TRIG = 100;      // distancia a la señal a la que el área cruza el umbral
+const ADV  = 60;       // "0.7 s" de avance antes de frenar/girar
+const DWELL_U = 130;   // unidades de scroll que dura una parada de 2.5 s
+const SLOW_LEN = 230;  // tramo a velocidad 7
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const $ = id => document.getElementById(id);
+
+// ====== SVG setup ======
+const world = $('world');
+['road-edge','road','road-side-l','road-center'].forEach(id => $(id).setAttribute('d', ROAD_D));
+const roadPath = $('road');
+const TOTAL = roadPath.getTotalLength();
+const pt = s => roadPath.getPointAtLength(Math.max(0, Math.min(TOTAL, s)));
+function pose(s){
+  const a = pt(s), b = pt(Math.min(TOTAL, s + 2)), c = pt(Math.max(0, s - 2));
+  return {x:a.x, y:a.y, ang: Math.atan2(b.y - c.y, b.x - c.x)};
+}
+// línea de largada y meta
+(function(){
+  const p0 = pose(10), p1 = pose(TOTAL - 10);
+  const mk = (p, txt) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    const deg = p.ang*180/Math.PI, nx = -Math.sin(p.ang), ny = Math.cos(p.ang);
+    g.innerHTML = `<g transform="translate(${p.x} ${p.y}) rotate(${deg})"><rect x="-4" y="-46" width="8" height="92" fill="#f2eee4"/>
+      <g fill="#111">${[...Array(6)].map((_,i)=>`<rect x="${i%2?-4:0}" y="${-46+i*15.33}" width="4" height="15.33"/>`).join('')}</g></g>
+      <text x="${p.x - nx*62}" y="${p.y - ny*62 + 4}" text-anchor="middle" font-family="JetBrains Mono,ui-monospace,monospace" font-size="12" fill="#8d897d">${txt}</text>`;
+    return g;
+  };
+  $('startline').append(mk(p0,'LARGADA  [s]'), mk(p1,'[p]'));
+})();
+
+// señales a la derecha del camino
+const SIGN_OFF = 92;
+const signEls = {};
+(function(){
+  const g = $('signs'), lab = $('static-labels');
+  SIGNS.forEach((sg, i) => {
+    const p = pose(sg.s);
+    let nx = -Math.sin(p.ang), ny = Math.cos(p.ang); // normal derecha (y hacia abajo)
+    sg.x = p.x + nx*SIGN_OFF; sg.y = p.y + ny*SIGN_OFF;
+    if (sg.pos){ nx = 0; ny = 1; sg.x = sg.pos.x; sg.y = sg.pos.y; }  // señal sobre un tramo fuera del camino principal
+    const el = document.createElementNS('http://www.w3.org/2000/svg','g');
+    el.setAttribute('class','sign');
+    el.setAttribute('transform',`translate(${sg.x} ${sg.y})`);
+    el.innerHTML = `<line x1="${-nx*SIGN_OFF*0.42}" y1="${-ny*SIGN_OFF*0.42}" x2="0" y2="0" stroke="#5d5a52" stroke-width="3"/>
+      <circle r="31" fill="#131416" opacity=".6"/>
+      <use href="#sg-${sg.id}" x="-26" y="-26" width="52" height="52"/>
+      <g class="cool" opacity="0"><circle r="34" fill="none" stroke="#39ff6a" stroke-width="3" stroke-dasharray="6 5"/>
+      <text y="52" text-anchor="middle" font-family="JetBrains Mono,ui-monospace,monospace" font-size="11" fill="#39ff6a">cooldown 8 s</text></g>`;
+    g.appendChild(el);
+    signEls[sg.id] = el;
+    // etiquetas para el modo estático
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', sg.x + nx*52); t.setAttribute('y', sg.y + ny*52 + 8);
+    t.setAttribute('text-anchor', Math.abs(nx) > .5 ? (nx>0?'start':'end') : 'middle');
+    t.setAttribute('font-family','JetBrains Mono,ui-monospace,monospace'); t.setAttribute('font-size','36'); t.setAttribute('fill','#dcd6c6');
+    if (sg.pos){ t.setAttribute('x', sg.x - 14); t.setAttribute('text-anchor','start'); }  // que no pise la calle que baja
+    t.textContent = `${i+1}. ${sg.label||sg.id}`;
+    lab.appendChild(t);
+  });
+})();
+
+// tabla
+(function(){
+  const tb = $('tabla-body');
+  tb.innerHTML = SIGNS.map(sg => `<tr>
+    <td class="cls"><svg class="sw" aria-hidden="true" viewBox="0 0 100 100"><use href="#sg-${sg.id}" width="100" height="100"/></svg>${sg.id}</td>
+    <td>${sg.act}</td><td class="mono">${sg.thr}${sg.thr===0.03?' (por defecto)':''}</td></tr>`).join('');
+})();
+
+// ====== schedule: scroll (u) → distancia (s) ======
+// Cada tramo: {u0,u1,s0,s1,speed,kind,sign}
+const SEG = [];
+(function build(){
+  let u = 0, s = 0, speed = CRUCERO;
+  const rate = sp => sp / CRUCERO;
+  const move = (ds, kind, sign, sp) => {
+    sp = sp === undefined ? speed : sp;
+    const du = ds / rate(sp);
+    SEG.push({u0:u, u1:u+du, s0:s, s1:s+ds, speed:sp, kind, sign}); u += du; s += ds;
+  };
+  SIGNS.forEach(sg => {
+    const trig = sg.s - (sg.tr || TRIG);
+    if (trig > s) move(trig - s, 'cruise', null);
+    sg.trigS = s;
+    if (sg.kind === 'stop'){ move(ADV, 'approach', sg); SEG.push({u0:u,u1:u+DWELL_U,s0:s,s1:s,speed:0,kind:'stop',sign:sg}); u += DWELL_U; }
+    else if (sg.kind === 'slow'){ move(SLOW_LEN, 'slow', sg, 7); }
+    else if (sg.kind === 'speed'){ speed = sg.speed; }
+    else if (sg.kind === 'turnR' || sg.kind === 'turnL'){ move(ADV, 'approach', sg); move(220 + TRIG - ADV, sg.kind, sg); }
+    else if (sg.kind === 'contra'){ move(ADV, 'approach', sg); move(220 + TRIG - ADV, 'contra', sg); }
+  });
+  move(TOTAL - s, 'cruise', null);
+})();
+const TOTAL_U = SEG[SEG.length-1].u1;
+function segAt(u){
+  for (let i = 0; i < SEG.length; i++) if (u <= SEG[i].u1) return SEG[i];
+  return SEG[SEG.length-1];
+}
+function stateAt(u){
+  u = Math.max(0, Math.min(TOTAL_U, u));
+  const sg = segAt(u);
+  const f = sg.u1 > sg.u0 ? (u - sg.u0)/(sg.u1 - sg.u0) : 1;
+  return {s: sg.s0 + (sg.s1 - sg.s0)*f, seg: sg, f};
+}
+
+// ====== DOM refs ======
+const stage = $('stage'), tall = $('tall'), carG = $('car'), cam = $('cam'), narr = $('narr');
+const camUse = $('cam-use'), camBox = $('cam-box'), camLabel = $('cam-label'), camSpeed = $('cam-speed');
+const gConf = $('g-conf'), gArea = $('g-area');
+const speedBig = $('speed-big'), steerEl = $('steer'), startcard = $('startcard'), endcard = $('endcard'), progress = $('progress');
+const nName = $('n-name'), nState = $('n-state'), nAct = $('n-act'), nVoz = $('n-voz'), nCount = $('n-count');
+const frenos = null;
+
+// ====== layout ======
+let PX = 2.4, staticMode = false;
+let cam_x = 0, cam_y = 0, cam_w = 1000, cam_h = 600, camInit = false;
+function layout(){
+  const vw = innerWidth, vh = stage.clientHeight || innerHeight;
+  PX = vw < 700 ? 1.9 : 2.4;
+  if (!staticMode) tall.style.height = Math.round(TOTAL_U*PX + vh) + 'px';
+  cam_w = vw < 700 ? 480 : (vw < 1100 ? 820 : 1000);
+  cam_h = cam_w * vh / vw;
+  if (staticMode) setStaticView();
+}
+function setStaticView(){
+  const b1 = roadPath.getBBox(), b2 = $('stub').getBBox();
+  const bx0 = Math.min(b1.x, b2.x), by0 = Math.min(b1.y, b2.y);
+  const bb = {x:bx0, y:by0, width:Math.max(b1.x+b1.width, b2.x+b2.width)-bx0, height:Math.max(b1.y+b1.height, b2.y+b2.height)-by0};
+  const pad = innerWidth < 640 ? 120 : 170;
+  world.setAttribute('viewBox', `${bb.x-pad} ${bb.y-pad} ${bb.width+2*pad} ${bb.height+2*pad}`);
+}
+
+// ====== HUD helpers ======
+const fmt = (n,d) => n.toFixed(d);
+const areaAt = (thr, d, tr) => Math.min(0.22, thr * Math.pow(tr / Math.max(d, 14), 2));
+const confAt = d => Math.max(0, Math.min(0.93, 0.56 + 0.40 * (1 - d / 440)));
+let lastHUD = '';
+function setGate(el, v, thr, digits, max){
+  const ok = v >= thr;
+  el.classList.toggle('ok', ok);
+  el.querySelector('.fill').style.width = Math.min(100, v / max * 100) + '%';
+  el.querySelector('.tick').style.left = Math.min(100, thr / max * 100) + '%';
+  el.querySelector('.v').textContent = `${fmt(v,digits)} / ${fmt(thr,digits)}`;
+}
+function updateHUD(st){
+  const s = st.s, seg = st.seg;
+  const speed = seg.speed;
+  speedBig.textContent = 'Velocidad: ' + speed;
+  camSpeed.textContent = 'Velocidad: ' + speed;
+  // señal activa: la próxima no superada por más de 90 unidades
+  let active = null, fired = 0;
+  for (const sg of SIGNS){
+    const triggered = s >= sg.trigS - 0.01 && (seg.sign === sg || s > sg.trigS);
+    if (s >= sg.trigS - 0.01) fired++;
+    signEls[sg.id].querySelector('.cool').setAttribute('opacity', (s >= sg.trigS - 0.01 && s < sg.s + 900) ? '1' : '0');
+    const d = sg.s - s;
+    if (!active && d > -90 && d < 440) active = sg;
+  }
+  progress.textContent = `señal ${Math.min(10,fired)} / 10`;
+  startcard.classList.toggle('hidden', s > 20);
+  endcard.classList.toggle('hidden', s < TOTAL - 15);
+  // dirección
+  const carUse = carG.querySelector('use');
+  let steer = '';
+  if (seg.kind === 'turnR') steer = 'dirección +30° · 2 s';
+  else if (seg.kind === 'turnL') steer = 'dirección −30° · 2 s';
+  else if (seg.kind === 'contra') steer = 'giro a la derecha · 5 s';
+  else if (seg.kind === 'stop') steer = 'freno';
+  else if (seg.kind === 'slow') steer = 'velocidad reducida · 2.5 s';
+  steerEl.textContent = steer;
+  carG.querySelectorAll('.freno').forEach(r => r.setAttribute('fill', seg.kind==='stop' ? '#ff3b2e' : '#5a1410'));
+
+  if (!active){ cam.classList.remove('on'); narr.classList.remove('on'); return; }
+  const d = active.s - s;
+  const isFired = s >= active.trigS - 0.01;
+  const tr = active.tr || TRIG;                      // distancia (relativa) a la que esta señal cruza su umbral
+  const dd = isFired ? tr : Math.max(d, tr);   // tras disparar, el overlay conserva la lectura que disparó
+  const dEff = dd - tr + TRIG;                       // distancia equivalente para la confianza y la posición del cuadro
+  const area = areaAt(active.thr, dd, tr), conf = confAt(dEff);
+  cam.classList.add('on'); narr.classList.add('on');
+  camUse.setAttribute('href', '#sg-' + active.id);
+  const side = 200 * Math.sqrt(area) * 1.9;        // cuadro de 640×640 → 200×200
+  const cx = 118 - (1 - Math.min(1, dEff/440)) * 16, cy = 104;
+  const x = cx - side/2, y = cy - side/2;
+  camUse.setAttribute('x', x); camUse.setAttribute('y', y); camUse.setAttribute('width', side); camUse.setAttribute('height', side);
+  camBox.setAttribute('x', x-2); camBox.setAttribute('y', y-2); camBox.setAttribute('width', side+4); camBox.setAttribute('height', side+4);
+  camBox.setAttribute('stroke', conf >= 0.85 ? '#39ff6a' : '#f5c400');
+  const atRight = x > 96 || active.id.length > 8;   // los nombres largos se alinean a la derecha para no cortarse
+  camLabel.setAttribute('text-anchor', atRight ? 'end' : 'start');
+  camLabel.setAttribute('x', atRight ? Math.min(196, x + side + 2) : Math.max(4, x - 2)); camLabel.setAttribute('y', Math.max(10, y-6));
+  camLabel.textContent = `${active.id} ${fmt(conf,2)} area=${fmt(area,3)}`;
+  setGate(gConf, conf, 0.85, 2, 1);
+  setGate(gArea, area, active.thr, 3, Math.max(0.08, active.thr*2.2));
+  const key = active.id + (isFired?'1':'0') + seg.kind;
+  if (key !== lastHUD){
+    lastHUD = key;
+    nName.textContent = active.label || active.id;
+    narr.classList.toggle('fired', isFired);
+    nVoz.textContent = `espeak-ng → «${active.label||active.id}» · WAV por WiFi a la laptop`;
+    if (!isFired){
+      nState.textContent = conf >= 0.85 ? 'confianza ok · todavía lejos' : 'detectada · acercándose';
+      nAct.textContent = conf >= 0.85
+        ? `La confianza ya supera 0.85, pero el cuadro aún cubre poco de la imagen (área < ${active.thr}). El auto espera a estar más cerca.`
+        : `El modelo ve «${active.label||active.id}» pero con confianza menor a 0.85. Sigue avanzando.`;
+    } else {
+      nState.textContent = 'acción disparada · enfriamiento 8 s';
+      nAct.textContent = active.act;
+    }
+  } else if (!isFired){
+    const okc = conf >= 0.85;
+    nState.textContent = okc ? 'confianza ok · todavía lejos' : 'detectada · acercándose';
+    nAct.textContent = okc
+      ? `La confianza ya supera 0.85, pero el cuadro aún cubre poco de la imagen (área < ${active.thr}). El auto espera a estar más cerca.`
+      : `El modelo ve «${active.label||active.id}» pero con confianza menor a 0.85. Sigue avanzando.`;
+  }
+  if (seg.kind === 'stop' && seg.sign === active) nCount.textContent = `detenido ${fmt(2.5*st.f,1)} / 2.5 s`;
+  else if (seg.kind === 'slow' && seg.sign === active) nCount.textContent = `a velocidad 7 · ${fmt(2.5*st.f,1)} / 2.5 s`;
+  else if (seg.kind === 'approach' && seg.sign === active) nCount.textContent = `avanzando 0.7 s para acercarse…`;
+  else nCount.textContent = isFired ? 'esta señal no vuelve a disparar durante 8 s' : `distancia relativa: ${Math.round(d)}`;
+}
+
+// ====== render loop ======
+let targetU = 0, curS = 0, running = false, rafId = 0, lastS = -1;
+function render(){
+  rafId = 0;
+  const st = stateAt(targetU);
+  if (!camInit){ cam_x = st.s; camInit = true; }
+  // suavizado del auto
+  curS += (st.s - curS) * (reduce.matches ? 1 : 0.18);
+  if (Math.abs(st.s - curS) < 0.05) curS = st.s;
+  const p = pose(curS);
+  carG.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${(p.ang*180/Math.PI).toFixed(1)})`);
+  if (!staticMode){
+    const lead = pose(Math.min(TOTAL, curS + 110));
+    const tx = (p.x + lead.x)/2, ty = (p.y + lead.y)/2;
+    cam_x += (tx - cam_x) * 0.12; cam_y += (ty - cam_y) * 0.12;
+    if (!isFinite(cam_x)) { cam_x = tx; cam_y = ty; }
+    world.setAttribute('viewBox', `${(cam_x - cam_w/2).toFixed(1)} ${(cam_y - cam_h/2).toFixed(1)} ${cam_w.toFixed(1)} ${cam_h.toFixed(1)}`);
+    updateHUD({s: curS, seg: st.seg, f: st.f});
+  }
+  if (Math.abs(st.s - curS) > 0.05 || Math.abs(cam_x - p.x) > 400) rafId = requestAnimationFrame(render);
+}
+function onScroll(){
+  if (staticMode) return;
+  const rect = tall.getBoundingClientRect();
+  const total = tall.offsetHeight - stage.clientHeight;
+  const f = Math.max(0, Math.min(1, -rect.top / Math.max(1,total)));
+  targetU = f * TOTAL_U;
+  if (!rafId) rafId = requestAnimationFrame(render);
+}
+addEventListener('scroll', onScroll, {passive:true});
+addEventListener('resize', () => { layout(); onScroll(); if (!rafId) rafId = requestAnimationFrame(render); });
+
+// ====== static mode ======
+const btnStatic = $('btn-static');
+function setStatic(on){
+  staticMode = on;
+  document.body.classList.toggle('static', on);
+  btnStatic.setAttribute('aria-pressed', String(on));
+  btnStatic.textContent = on ? 'Ver versión animada' : 'Ver versión estática';
+  $('tabla').open = on || $('tabla').open;
+  $('static-labels').style.display = on ? '' : 'none';
+  $('hint-text').innerHTML = on ? 'Versión estática: la pista completa, las señales numeradas y la tabla con cada acción.' : 'Desplazate hacia abajo para presionar <kbd>s</kbd> y conducir.';
+  world.setAttribute('aria-label', on ? 'Vista completa de la pista en S con las diez señales numeradas' : '');
+  layout();
+  if (on){ carG.setAttribute('transform','translate(0 0) rotate(0)'); cam.classList.remove('on'); narr.classList.remove('on'); }
+  else { camInit = false; curS = 0; onScroll(); }
+}
+btnStatic.addEventListener('click', () => setStatic(!staticMode));
+setStatic(reduce.matches);
+reduce.addEventListener && reduce.addEventListener('change', e => setStatic(e.matches));
+if (!staticMode){ layout(); onScroll(); }
+
+// ====== espejo (fliplr) ======
+const mirror = $('mirror'), verdict = $('verdict'), flipOn = $('flip-on'), flipOff = $('flip-off'), augCap = $('aug-cap');
+function setFlip(on){
+  mirror.classList.toggle('flipped', on);
+  flipOn.setAttribute('aria-pressed', String(on)); flipOff.setAttribute('aria-pressed', String(!on));
+  verdict.className = 'verdict ' + (on ? 'bad' : 'good');
+  verdict.textContent = on
+    ? 'Reflejada: la flecha ahora apunta a la derecha, pero la etiqueta sigue diciendo «izquierda». El modelo aprende que una flecha a la derecha es «izquierda».'
+    : 'Sin reflejo: la flecha y la etiqueta coinciden. El modelo aprende «izquierda» = flecha a la izquierda.';
+  augCap.textContent = on ? 'lo que entra al entrenamiento (reflejada)' : 'lo que entra al entrenamiento';
+}
+flipOn.addEventListener('click', () => setFlip(true));
+flipOff.addEventListener('click', () => setFlip(false));
+
+// ====== sparkline (results.csv, validación) ======
+(function(){
+  const map50 = [0.748,0.843,0.947,0.981,0.981,0.951,0.963,0.96,0.962,0.973,0.977,0.954,0.957,0.963,0.961,0.964,0.966,0.973,0.961,0.977,0.98,0.973,0.971,0.98,0.987,0.966,0.979,0.962,0.98,0.986,0.979,0.985,0.961,0.96,0.973,0.962,0.966,0.976,0.967,0.964,0.976,0.968,0.978,0.96,0.965,0.985,0.989,0.979,0.974,0.977,0.971,0.987,0.981,0.975,0.965,0.974,0.964,0.983,0.97,0.984,0.984,0.977,0.97,0.982,0.97,0.984,0.974];
+  const map5095 = [0.646,0.727,0.835,0.861,0.882,0.837,0.862,0.857,0.866,0.875,0.884,0.857,0.863,0.868,0.867,0.881,0.876,0.885,0.874,0.891,0.889,0.889,0.892,0.899,0.901,0.879,0.898,0.882,0.901,0.903,0.896,0.898,0.879,0.877,0.887,0.881,0.879,0.89,0.884,0.879,0.891,0.885,0.9,0.874,0.885,0.905,0.91,0.895,0.894,0.9,0.889,0.903,0.897,0.893,0.885,0.895,0.88,0.9,0.891,0.905,0.906,0.895,0.889,0.907,0.897,0.904,0.891];
+  const toPts = arr => arr.map((v,i) => `${(34 + i*(562/66)).toFixed(1)},${(140 - (v-0.6)/0.4*132).toFixed(1)}`).join(' ');
+  $('sp-map50').setAttribute('points', toPts(map50));
+  $('sp-map5095').setAttribute('points', toPts(map5095));
+})();
+
+// ====== video ======
+if (DEMO_VIDEO_URL){
+  $('video-box').innerHTML = `<span class="road" aria-hidden="true"></span><a class="btn amarillo" href="${DEMO_VIDEO_URL}" target="_blank" rel="noopener">Ver el video de la demo</a>`;
+}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Dependencias para correr sign_movement_final.py en la Raspberry Pi
+# (instalar con: pip install -r requirements.txt)
+
+opencv-python
+numpy
+flask
+requests
+ai-edge-litert
+
+# picarx y vilib son librerias propias de SunFounder para el kit PiCar-X.
+# No estan en PyPI: se instalan con el script oficial del fabricante, por ej.:
+#   git clone https://github.com/sunfounder/picar-x.git && cd picar-x && sudo python3 install.py
+#   git clone https://github.com/sunfounder/vilib.git && cd vilib && sudo python3 install.py
+
+# espeak-ng se usa para generar el audio (texto a voz) y es un paquete del sistema, no de pip:
+#   sudo apt install espeak-ng
+
+# ---------------------------------------------------------------------------
+# Dependencias para audio_server.py (corre en la computadora, no en la Pi)
+# ---------------------------------------------------------------------------
+# flask        (ya incluido arriba)
+# winsound viene incluido con Python en Windows, no requiere instalacion
+
+# ---------------------------------------------------------------------------
+# Dependencias para los notebooks de entrenamiento/evaluacion (corren en Colab)
+# Colab ya trae numpy, pandas, matplotlib y pillow preinstalados.
+# Los notebooks instalan lo que falta con su propia celda "!pip install ...":
+# ---------------------------------------------------------------------------
+# ultralytics
