@@ -416,7 +416,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
           <dt>ajustes</dt><dd>contramano 0.02 · vel30 0.01 · derecha 0.025 · izquierda 0.025 · pare 0.035 · ceder 0.04</dd>
           <dt>enfriamiento</dt><dd>8 s por clase, para no repetir la acción sobre la misma señal</dd>
           <dt>velocidades</dt><dd>crucero 12 · vel20 → 5 · vel30 → 30 · peligro → 7 durante 2.5 s</dd>
-          <dt>giros</dt><dd>derecha +30° / izquierda −30° durante 2 s, tras avanzar 0.7 s · contramano: gira a la derecha durante 3.5 s</dd>
+          <dt>giros</dt><dd>derecha +30° / izquierda −30° durante 3.5 s, tras avanzar 0.7 s · contramano: gira a la derecha durante 3.5 s</dd>
           <dt>paradas</dt><dd>pare, peatón y ceder: avanza 0.7 s para acercarse y se detiene 2.5 s</dd>
         </dl>
       </div>
@@ -488,11 +488,11 @@ const CRUCERO = 12;
 const SIGNS = [
   {id:'pare',      s:240,  thr:0.035, kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
   {id:'peaton',    s:540,  thr:0.03,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.', label:'peatón'},
-  {id:'derecha',   s:1020, thr:0.025, kind:'turnR', act:'Avanza 0.7 s y gira la dirección +30° durante 2 s.'},
+  {id:'derecha',   s:1020, thr:0.025, kind:'turnR', act:'Avanza 0.7 s y gira la dirección +30° durante 3.5 s.'},
   {id:'peligro',   s:1440, thr:0.03,  kind:'slow', act:'Baja la velocidad a 7 durante 2.5 s.'},
   {id:'vel20',     s:1740, thr:0.03,  kind:'speed', speed:5,  act:'Fija la velocidad en 5.'},
   {id:'avance',    s:2040, thr:0.03,  kind:'speed', speed:12, act:'Vuelve a la velocidad de crucero (12).'},
-  {id:'izquierda', s:2240, thr:0.025, kind:'turnL', act:'Avanza 0.7 s y gira la dirección −30° durante 2 s.'},
+  {id:'izquierda', s:2240, thr:0.025, kind:'turnL', act:'Avanza 0.7 s y gira la dirección −30° durante 3.5 s.'},
   {id:'vel30',     s:2680, thr:0.01,  kind:'speed', speed:30, act:'Fija la velocidad en 30.'},
   {id:'ceder',     s:2980, thr:0.04,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
   // la señal está sobre la calle recta que sigue (contramano): el auto no puede seguir derecho y gira a la derecha
@@ -663,9 +663,9 @@ function updateHUD(st){
   // dirección
   const carUse = carG.querySelector('use');
   let steer = '';
-  if (seg.kind === 'turnR') steer = 'dirección +30° · 2 s';
-  else if (seg.kind === 'turnL') steer = 'dirección −30° · 2 s';
-  else if (seg.kind === 'contra') steer = 'giro a la derecha · 5 s';
+  if (seg.kind === 'turnR') steer = 'dirección +30° · 3.5 s';
+  else if (seg.kind === 'turnL') steer = 'dirección −30° · 3.5 s';
+  else if (seg.kind === 'contra') steer = 'giro a la derecha · 3.5 s';
   else if (seg.kind === 'stop') steer = 'freno';
   else if (seg.kind === 'slow') steer = 'velocidad reducida · 2.5 s';
   steerEl.textContent = steer;
