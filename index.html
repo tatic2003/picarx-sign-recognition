@@ -387,7 +387,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 
     <div class="grid2" style="margin-top:3rem">
       <div>
-        <h3 class="eyebrow">Entrenamiento · métricas de validación · corrida entrenamiento `sign_traffic_recognition_final_train.ipynb`</h3>
+        <h3 class="eyebrow">Entrenamiento · métricas de validación · corrida <span class="mono" style="text-transform:none">sign_traffic_recognition_final_train.ipynb</span></h3>
         <div class="metrics">
           <div><b>0.957</b><small>precisión</small></div>
           <div><b>0.988</b><small>recall</small></div>
@@ -415,9 +415,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
           <dt>área</dt><dd>área del cuadro ÷ área del cuadro de imagen; por defecto ≥ 0.03</dd>
           <dt>ajustes</dt><dd>contramano 0.02 · vel30 0.01 · derecha 0.025 · izquierda 0.025 · pare 0.035 · ceder 0.04</dd>
           <dt>enfriamiento</dt><dd>8 s por clase, para no repetir la acción sobre la misma señal</dd>
-          <dt>velocidades</dt><dd>crucero 12 · vel20 → 5 · vel30 → 30 · peligro → 7 durante 2.5 s</dd>
+          <dt>velocidades</dt><dd>crucero 12 · vel20 → 5 · vel30 → 30</dd>
           <dt>giros</dt><dd>derecha +30° / izquierda −30° durante 3.5 s, tras avanzar 0.7 s · contramano: gira a la derecha durante 3.5 s</dd>
-          <dt>paradas</dt><dd>pare, peatón y ceder: avanza 0.7 s para acercarse y se detiene 2.5 s</dd>
+          <dt>paradas</dt><dd>pare, peatón, ceder y peligro: avanza 0.7 s para acercarse y se detiene 2.5 s</dd>
         </dl>
       </div>
     </div>
@@ -489,7 +489,7 @@ const SIGNS = [
   {id:'pare',      s:240,  thr:0.035, kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
   {id:'peaton',    s:540,  thr:0.03,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.', label:'peatón'},
   {id:'derecha',   s:1020, thr:0.025, kind:'turnR', act:'Avanza 0.7 s y gira la dirección +30° durante 3.5 s.'},
-  {id:'peligro',   s:1440, thr:0.03,  kind:'slow', act:'Baja la velocidad a 7 durante 2.5 s.'},
+  {id:'peligro',   s:1440, thr:0.03,  kind:'stop', act:'Avanza 0.7 s para acercarse y se detiene 2.5 s.'},
   {id:'vel20',     s:1740, thr:0.03,  kind:'speed', speed:5,  act:'Fija la velocidad en 5.'},
   {id:'avance',    s:2040, thr:0.03,  kind:'speed', speed:12, act:'Vuelve a la velocidad de crucero (12).'},
   {id:'izquierda', s:2240, thr:0.025, kind:'turnL', act:'Avanza 0.7 s y gira la dirección −30° durante 3.5 s.'},
