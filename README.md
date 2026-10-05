@@ -30,7 +30,7 @@ El auto corre un modelo **YOLOv8** entrenado a medida (fine-tuning sobre pesos C
 | 🛑 Pare | `pare` | Se detiene unos segundos |
 | 🚶 Peatón | `peaton` | Se detiene unos segundos |
 | ⚠️ Ceda el paso | `ceder` | Se detiene unos segundos |
-| ⚠️ Peligro | `peligro` | Reduce la velocidad |
+| ⚠️ Peligro | `peligro` | Se detiene unos segundos |
 | 🔄 Contramano | `contramano` | Gira a la derecha para desviarse de la ruta en contramano |
 | ➡️ Derecha | `derecha` | Gira a la derecha |
 | ⬅️ Izquierda | `izquierda` | Gira a la izquierda |
